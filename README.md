@@ -1,1 +1,2 @@
 # luci-app-adbyby
+¸øADBYBYÐ´µÄluci
