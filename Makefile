@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adbyby
 PKG_VERSION:=2.7
-PKG_RELEASE:=7.0
+PKG_RELEASE:=8.0
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
@@ -19,7 +19,7 @@ define Package/adbyby
 endef
 
 define Package/adbyby/description
-	adkiller
+	ADBYBY is a tools to remove AD from internet browsing.
 endef
 
 define Build/Prepare
@@ -61,15 +61,19 @@ uci -q batch <<-EOF >/dev/null
 	commit firewall
 EOF
 rm -f /tmp/luci-indexcache
+iptables -t nat -I zone_lan_prerouting -p tcp -j REDIRECT --to-ports 8118 || echo "错误！！，你的ipstables版本太低,请升级!" && exit 1
 /etc/init.d/adbyby enable && echo "设置开机自启动成功"
 /etc/init.d/adbyby start && echo "ADBYBY启动成功"
 echo "=============================================="
 echo "=============================================="
 echo
-echo               "ADBYBY安装成功！"
+echo  "ADBYBY安装成功！"
 echo
 echo
-echo            "享受无广告的网络体验吧！"
+echo "享受无广告的网络体验吧！"
+echo
+echo
+echo "如果你发现还有广告，请清理浏览器缓存"
 echo
 echo "=============================================="
 echo "=============================================="
