@@ -81,6 +81,7 @@ o:value("1", translate("<推荐>白名单模式（忽略列表外的设备，过
 o:value("2", translate("<推荐>黑名单模式（忽略列表中的设备，过滤列表外的设备）"))
 o:value("3", translate("指定域名模式（仅过滤列表中的网站，如：\"v.youku.com\“）"))
 o:value("4", translate("手动添加代理模式（最不影响速度模式，你需要手动在浏览器添加代理 \"路由器ip:8118\"）"))
+o:value("5", translate("IPLIST模式，基于IPSET的域名指定模式，依赖ipset，确保你已经安装dnsmasq-full和ipset"))
 
 o.rmempty = false
 o.default = 0
@@ -92,6 +93,22 @@ o:depends("adbyby_mode", 2)
 o = s:taboption("general", DynamicList, "host_list", 
 	translate("域名列表"))
 o:depends("adbyby_mode", 3)
+o = s:taboption("general", TextValue, "_adbyby_ipset", "ipset列表", 
+		translate("注意添加格式"))
+o.rows = "*"
+o.cols = "*"
+o.wrap = "off"
+function o.cfgvalue(self, section)
+	return nixio.fs.readfile("/usr/share/adbyby/ipset.list") or ""
+end
+function o.write(self, section, value)
+	if value then
+		value = value:gsub("\r\n?", "\n")
+		nixio.fs.writefile("/usr/share/adbyby/ipset.list", value)
+	end
+end
+o:depends("adbyby_mode", 5)
+
 
 s:taboption("general", DummyValue,"opennewwindow" , 
 	translate("<br /><p align=\"justify\"><script type=\"text/javascript\"></script><input type=\"button\" class=\"cbi-button cbi-button-apply\" value=\"ADbyby官网\" onclick=\"window.open('http://www.adbyby.com/')\" /></p>"),
@@ -111,22 +128,7 @@ o = s:taboption("user", DynamicList, "address",
 		translate("第三方规则地址"), 
 		translate("强烈不建议添加，会导致不可预料问题"))
 o = s:taboption("user", DummyValue, "_tips", "自定义规则", 
-		translate(
-"<br />------------------------------ ADByby 自定义过滤语法简表---------------------------------<br /> \
-  --------------  规则基于abp规则，并进行了字符替换部分的扩展-----------------------------<br /> \
-  ABP规则请参考<a href=\"https://adblockplus.org/zh_CN/filters\">https://adblockplus.org/zh_CN/filters</a>，下面为大致摘要<br /> \
-  \"!\" 为行注释符，注释行以该符号起始作为一行注释语义，用于规则描述<br /> \
-  \"*\" 为字符通配符，能够匹配0长度或任意长度的字符串，该通配符不能与正则语法混用。<br /> \
-  \"^\" 为分隔符，可以是除了字母、数字或者 _ - . % 之外的任何字符。<br /> \
-  \"|\" 为管线符号，来表示地址的最前端或最末端<br /> \
-  \"||\" 为子域通配符，方便匹配主域名下的所有子域。<br /> \
-  \"~\" 为排除标识符，通配符能过滤大多数广告，但同时存在误杀, 可以通过排除标识符修正误杀链接。<br /> \
-  \"##\" 为元素选择器标识符，后面跟需要隐藏元素的CSS样式例如 #ad_id  .ad_class<br /> \
-  元素隐藏暂不支持全局规则和排除规则<br /> \
-  字符替换扩展<br /> \
-  文本替换选择器标识符，后面跟需要替换的文本数据，格式：$s@模式字符串@替换后的文本@<br /> \
-  支持通配符*和？<br /> \
-  -------------------------------------------------------------------------------------------<br />"))
+		translate("ADBYBY规则请参考<a href=\"https://adblockplus.org/zh_CN/filters\">Adblock Plus 过滤规则</a>。<br />"))
 o = s:taboption("user", TextValue, "_editconf_user", nil, 
 translate("<strong>强者制定规则，弱者困守规则，勇者打破规则，智者游戏规则</strong>"))
 o.rows = "*"

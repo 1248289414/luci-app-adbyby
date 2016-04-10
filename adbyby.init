@@ -20,15 +20,27 @@ rule()
 	config_list_foreach $1 address rule_add
 }
 
+ipset_mode(){
+	ipset -N adbyby_list hash:ip
+	iptables -t nat -A ADBYBY_RULE -p tcp -m set --match-set adbyby_list dst -j REDIRECT --to-port 8118
+	sed -e '/.*ipset.list/d' -i /etc/dnsmasq.conf
+	echo -e " \nconf-file=/usr/share/adbyby/ipset.list" >> "/etc/dnsmasq.conf"
+	/etc/init.d/dnsmasq restart
+}
+
 clean_rules()
 {
 	until [ -z "$(iptables-save -t nat | grep "zone_lan_prerouting" | grep "ADBYBY_RULE")" ]
 	do
-		iptables -t nat -D $(iptables-save -t nat | grep "zone_lan_prerouting" | grep "ADBYBY_RULE" | sed 's/^-A //g')
+		iptables -t nat -D $(iptables-save -t nat | grep "zone_lan_prerouting" | grep "ADBYBY_RULE" | sed 's/^-A //g') 2>/dev/null
 		sleep 1
 	done
 	iptables -t nat -F ADBYBY_RULE 2>/dev/null
 	iptables -t nat -X ADBYBY_RULE 2>/dev/null
+	ipset -F adbyby_list 2>/dev/null
+	ipset -X adbyby_list 2>/dev/null
+	sed -e '/.*ipset.list/d' -i /etc/dnsmasq.conf 2>/dev/null
+	/etc/init.d/dnsmasq restart 2>/dev/null
 }
 
 add_rules()
@@ -78,6 +90,9 @@ add_rules()
 	3)
 		config_list_foreach $1 host_list ban_host
 		iptables -t nat -A ADBYBY_RULE -j RETURN
+		;;
+	5)
+		ipset_mode
 		;;
 	esac
 	[ -n "$(pgrep /usr/share/adbyby/adbyby)" ] && iptables -t nat -I zone_lan_prerouting -p tcp -m multiport --dport $port -j ADBYBY_RULE
